@@ -1,0 +1,1842 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "https://api.nationalflooddata.com/v3",
+      "description": "API Server"
+    },
+    {
+      "url": "https://maps.nationalflooddata.com/",
+      "description": "Flood Map Raw Server"
+    }
+  ],
+  "info": {
+    "description": "The FEMA Flood Map API offers up-to-date FEMA flood zone maps and data that can be easily embedded into partners' products or workflow. Our data service is used by insurance companies, appraisers, real estate investors and software companies that offer services to these industries.\n\nWe offer the data in the various formats described below to meet a variety of partner use cases. If you have a particular need that you don't see met by the services below, please contact us and we'll likely be able to add what you need.\n\n# Authentication\n\nQueries to the v3 API require a key provided by National Flood Data, and the key must be provided in a request header using the key \"X-API-KEY\". The key cannot be supplied as a parameter, and therefore the API cannot be accessed through a simple web browser.\nTo obtain a key, [log-in or register](https://www.nationalflooddata.com/log-in.html)\n\n<!-- ReDoc-Inject: <security-definitions> -->\n\n# Rate Limiting\n\n The v3 API implements a rate limit of four requests per second with a burst limit of three, i.e. at most three requests will be processed simultaneously.\n\n# Flood Zones\n\nThe core of the FEMA flood maps API is the \"flood zone\" that is assigned to each region. This value is returned as the `fld_zone` field from the `s_fld_haz_ar` layer. Definitions for the zones are below.\n\n| Flood Zone | Description |\n|---|---|\n| A | An area with a 1% annual chance of flood; does not have base flood elevations (BFEs) available. |\n| AE | An area with a 1% annual chance of flood; base flood elevations BFEs are available. |\n| AH | An area with a 1% annual chance of flood with flood depths ranging from 1 to 3 feet, generally near pond or pooling areas. BFEs are available. |\n| AO | An area with a 1% annual chance of flood with flood depths ranging from 1 to 3 feet, generally sheet flow on sloping terrain. BFEs are available. |\n| AR | An area inundated by flooding, for which BFEs or average depths have been determined. This is an area that was previously, and will again, be protected from the 1% annual chance flood by a Federal flood protection system whose restoration is Federally funded and underway |\n| A1-A30 | An area with a 1% annual chance flooding, for which BFEs have been determined. |\n| B, X500 | An area with at least a 0.2% chance of annual flood or with a 1% annual chance of flood with average depths less that one foot or with drainage area less than one square mile. (C is the older designation and X500 is the current designation.) |\n| C, X | An area outside the 0.2% and 1% annual chance of flood regions. (C is the older designation and X500 is the current designation.) |\n| D | An area where flooding is possible but has not been studied. |\n| V | An area with a 1% annual chance flooding with velocity hazard due to waves; BFEs have are not available. |\n| VE, V1-V30 | An area with a 1% annual chance flooding with velocity hazard due to waves; BFEs have are available. |\n\n# Base Flood Elevations\n\n## bfe_type\n\nThe API field `bfe_type` describes how the base flood elevation for a region was determined.\n\n| bfe_type | description |\n| -- | -- |\n| provided | The base flood elevation is provided by FEMA within the flood zone layer. |\n| matched | The base flood elevation is provided by FEMA in an additional later, and that layer only has one base flood elevation transect that intersects the flood zone polygon. |\n| interpolated | The base flood elevation is provided by FEMA in an additional later. More than one base flood elevation transect intersects the flood zone polygon, and the closest value of these is used. |\n| extrapolated | No base flood elevation is provided by FEMA for the flood zone polygon. A value is extrapolated from neighboring values. |\n\n## Bodies of Water\n\nThe API returns the distance to nearest ten bodies of water. The bodies of water considered are those provided in the USGS National Hydrological Data (NHD) Set with an area greater than 0.25 square kilometers. Streams and not included. The USGS also generally does not include reservoirs, and therefore distance to these are not included.\n\n| Key | Description |\n| --- | --- |\n| areasqkm | area of the polygon in square meters (a body of water may be made of multiple polygons) |\n| distkm | distance to the body of water in kilometers |\n| filename | name of the file from USGS containing the body of water |\n| gnis_id | unique identifier provided by USGS |\n| name | name of body of water, generally only available for larger bodies of water |\n| state | US state that the body of water is in |\n\n## Elevation\n\nElevation in feet. Data provided by USGS. Defaults to -1000000 when not available.\n",
+    "version": "3.0.0",
+    "title": "FEMA Flood Map API",
+    "contact": {
+      "name": "API Support",
+      "email": "info@nationalflooddata.com",
+      "url": "http://nationalflooddata.com/"
+    },
+    "x-logo": {
+      "url": "http://docs.nationalflooddata.com/dataservice/v3/national-flood-data.png",
+      "altText": "National Flood Data Logo"
+    }
+  },
+  "tags": [
+    {
+      "name": "Flood API",
+      "description": "Description of our standard data APIs"
+    },
+    {
+      "name": "Flood Map Raw",
+      "description": "Provides exhaustive flood map data within a determined by user"
+    },
+    {
+      "name": "Dynamic Map",
+      "description": "How to use the dynamic flood map, i.e. zoom in and out, etc."
+    },
+    {
+      "name": "Map Tiles",
+      "description": "Map tiles as used in the dynamic and static maps."
+    },
+    {
+      "name": "Static Map",
+      "description": "How to use the static flood map, i.e. to obtain map images in jpg format to embed, for example, in a user report."
+    }
+  ],
+  "x-tagGroups": [
+    {
+      "name": "Flood APIs",
+      "tags": [
+        "Flood API",
+        "Flood Map Raw"
+      ]
+    },
+    {
+      "name": "Flood Maps",
+      "tags": [
+        "Dynamic Map",
+        "Static Map",
+        "Map Tiles"
+      ]
+    }
+  ],
+  "paths": {
+    "/tiles/flood-vector/{z}/{x}/{y}.mvt": {
+      "parameters": [
+        {
+          "name": "x-api-key",
+          "in": "header",
+          "description": "API Key needed for authentication",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "z",
+          "in": "path",
+          "description": "Zoom level of tile",
+          "required": true,
+          "schema": {
+            "type": "number",
+            "example": 13
+          }
+        },
+        {
+          "name": "x",
+          "in": "path",
+          "description": "x coord of tile",
+          "required": true,
+          "schema": {
+            "type": "number",
+            "example": 2043
+          }
+        },
+        {
+          "name": "y",
+          "in": "path",
+          "description": "y coord of tile",
+          "required": true,
+          "schema": {
+            "type": "number",
+            "example": 3140
+          }
+        }
+      ],
+      "servers": [
+        {
+          "url": "https://api.nationalflooddata.com/v3",
+          "description": "API Server"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Map Tiles"
+        ],
+        "summary": "Flood Vector Tiles",
+        "operationId": "getFloodVectorTile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/vnd.mapbox-vector-tile": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing API Key",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 401,
+                  "message": "Unauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something happened behind the scenes at National Flood Data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 500,
+                  "message": "Internal Server Error. Try again later."
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl https://api.nationalflooddata.com/v3/tiles/flood-vector/13/2043/3140.mvt -H \"x-api-key: <YOUR API KEY>\" --output tile.mvt"
+          }
+        ]
+      }
+    },
+    "/tiles/stormsurge/{category}/{z}/{x}/{y}.png": {
+      "parameters": [
+        {
+          "name": "x-api-key",
+          "in": "header",
+          "description": "API Key needed for authentication",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "category",
+          "in": "path",
+          "description": "category of storm surge for which to retrieve tiles",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "category1",
+              "category2",
+              "category3",
+              "category4",
+              "category5"
+            ]
+          }
+        },
+        {
+          "name": "z",
+          "in": "path",
+          "description": "Zoom level of tile",
+          "required": true,
+          "schema": {
+            "type": "number",
+            "example": 13
+          }
+        },
+        {
+          "name": "x",
+          "in": "path",
+          "description": "x coord of tile",
+          "required": true,
+          "schema": {
+            "type": "number",
+            "example": 2043
+          }
+        },
+        {
+          "name": "y",
+          "in": "path",
+          "description": "y coord of tile",
+          "required": true,
+          "schema": {
+            "type": "number",
+            "example": 3140
+          }
+        }
+      ],
+      "servers": [
+        {
+          "url": "https://api.nationalflooddata.com/v3",
+          "description": "API Server"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Map Tiles"
+        ],
+        "summary": "Storm Surge Tiles",
+        "operationId": "getStormSurgeTile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing API Key",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 401,
+                  "message": "Unauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something happened behind the scenes at National Flood Data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 500,
+                  "message": "Internal Server Error. Try again later."
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "source": "curl https://api.nationalflooddata.com/v3/tiles/stormsurge/category1/8/57/101.png -H \"x-api-key: <YOUR API KEY>\" --output tile.png"
+          }
+        ]
+      }
+    },
+    "/data": {
+      "parameters": [
+        {
+          "name": "x-api-key",
+          "in": "header",
+          "description": "API Key needed for authentication",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "servers": [
+        {
+          "url": "https://api.nationalflooddata.com/v3",
+          "description": "API Server"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Flood API"
+        ],
+        "summary": "FEMA Flood Data query",
+        "operationId": "getFloodData",
+        "parameters": [
+          {
+            "name": "searchtype",
+            "in": "query",
+            "description": "Specification of location type",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "addresscoord",
+                "addressparcel",
+                "coord",
+                "coordparcel",
+                "polygon"
+              ]
+            }
+          },
+          {
+            "name": "address",
+            "in": "query",
+            "description": "address with street number, street type, city, state, zip and without punctuation. _Required_ for searchtypes `addresscoord` and `addressparcel`. Do not include 4 digit zipcode extension.",
+            "required": false,
+            "example": "12 Maple Pl Mapleville KS 12345",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "description": "Location's latitude. _Required_ for searchtype `coord`",
+            "required": false,
+            "example": 34.071783,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "description": "Location's longitude. _Required_ for searchtype `coord`",
+            "required": false,
+            "example": -118.2596,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "polygon",
+            "in": "query",
+            "description": "Polygon in well known text format",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "loma",
+            "in": "query",
+            "description": "Include LOMA updates",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "elevation",
+            "in": "query",
+            "description": "Include Elevation Data (Elevation, BFE, Stormsurge) (_Special key required_)",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "property",
+            "in": "query",
+            "description": "Include property data (Only for seachtype addressparcel) (_Special key required_)",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "parcel",
+            "in": "query",
+            "description": "Include parcel data (_Special key required_)",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloodData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request caused by bad or missing parameters",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 400,
+                  "message": "Invalid Request"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing API Key",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 401,
+                  "message": "Unauthorized"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "No data available",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 402,
+                  "message": "No data available"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Location not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 404,
+                  "message": "Address/ Parcel not found"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "No parcel found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 405,
+                  "message": "Parcel not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something happened behind the scenes at National Flood Data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 500,
+                  "message": "Internal Server Error. Try again later."
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "source": "headers = {'x-api-key':'YOUR KEY'}\n\n# Get data without BFE\npayload = {\n  'lat': 34.071783,\n  'lng': -118.2596,\n  'searchtype':'addresscoord',\n  'loma': False\n}\nr = requests.get('https://api.nationalflooddata.com/v3/data', headers=headers, params=payload)\n\n # Get data with BFE\npayload = {\n  'address':'430 Australian Ave Palm Beach, FL 33480',\n  'searchtype':'addressparcel',\n  'loma': False\n  'elevation': True\n}\nr = requests.get('https://api.nationalflooddata.com/v3/data', headers=headers, params=payload)\n"
+          }
+        ],
+        "security": [
+          {
+            "x-api-key": []
+          }
+        ]
+      }
+    },
+    "/databatch": {
+      "servers": [
+        {
+          "url": "https://api.nationalflooddata.com/v3",
+          "description": "API Server"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Flood API"
+        ],
+        "summary": "FEMA Flood Data query - batch. Allows for posting a set of data requests, which are processed asynchronously. Poll the url given in the `result` field of response; this will return 200 and a set of results when the batch is completed. A batch may contain up to 20,000 requests.",
+        "operationId": "getFloodDataBatch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string"
+                  },
+                  "requests": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "User provided id. Must be unique"
+                        },
+                        "searchtype": {
+                          "type": "string",
+                          "description": "search type"
+                        },
+                        "address": {
+                          "in": "query",
+                          "description": "address with street number, street type, city, state, zip and without punctuation. _Required_ for searchtypes `addresscoord` and `addressparcel`. Do not include 4 digit zipcode extension.",
+                          "required": false,
+                          "example": "12 Maple Pl Mapleville KS 12345",
+                          "schema": {
+                            "type": "string"
+                          }
+                        },
+                        "lat": {
+                          "in": "query",
+                          "description": "Location's latitude. _Required_ for searchtype `coord`",
+                          "required": false,
+                          "example": 34.071783,
+                          "schema": {
+                            "type": "number"
+                          }
+                        },
+                        "lng": {
+                          "in": "query",
+                          "description": "Location's longitude. _Required_ for searchtype `coord`",
+                          "required": false,
+                          "example": -118.2596,
+                          "schema": {
+                            "type": "number"
+                          }
+                        },
+                        "polygon": {
+                          "in": "query",
+                          "description": "Polygon in well known text format",
+                          "required": false,
+                          "schema": {
+                            "type": "string"
+                          }
+                        },
+                        "loma": {
+                          "in": "query",
+                          "description": "Include LOMA updates",
+                          "required": false,
+                          "schema": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "elevation": {
+                          "in": "query",
+                          "description": "Include Elevation Data (Elevation, BFE, Stormsurge) (_Special key required_)",
+                          "required": false,
+                          "schema": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "property": {
+                          "in": "query",
+                          "description": "Include property data (Only for seachtype addressparcel) (_Special key required_)",
+                          "required": false,
+                          "schema": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "parcel": {
+                          "in": "query",
+                          "description": "Include parcel data (_Special key required_)",
+                          "required": false,
+                          "schema": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloodDataBatch"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request caused by bad or missing parameters",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 400,
+                  "message": "Invalid Request"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something happened behind the scenes at National Flood Data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 500,
+                  "message": "Internal Server Error. Try again later."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/floodmapraw": {
+      "parameters": [
+        {
+          "name": "X-API-KEY",
+          "in": "header",
+          "description": "API Key needed for authentication",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "servers": [
+        {
+          "url": "https://api.nationalflooddata.com/v3",
+          "description": "API Server"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Flood Map Raw"
+        ],
+        "summary": "FEMA Flood Map Raw query",
+        "operationId": "getFloodMapContent",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "degree value for size of square that polygons are returned for",
+            "schema": {
+              "type": "number",
+              "enum": [
+                0.04,
+                0.06,
+                0.08
+              ],
+              "default": 0.08
+            }
+          },
+          {
+            "name": "geojson",
+            "in": "query",
+            "description": "When set to false, geojson content will not be included. The geojson content can be large, so not including it is often faster.",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "excludex",
+            "in": "query",
+            "description": "When set to true, polygons with flood zone (fld_zone) \"X\" will not be included in the query. This generally makes the response load much smaller and easier to process quickly.",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "elevation",
+            "in": "query",
+            "description": "When set to true, base flood elevations (BFE) will be included in geojson format.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FloodMapContent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request caused by bad or missing parameters",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 400,
+                  "message": "Invalid Request"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad or missing API Key",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 401,
+                  "message": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Location not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 404,
+                  "message": "Address/ Parcel not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something happened behind the scenes at National Flood Data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": 500,
+                  "message": "Internal Server Error. Try again later."
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "python",
+            "source": "headers = {'x-api-key':'YOUR KEY'}\npayload = {\n  'lat': 34.071783,\n  'lng': -118.2596,\n  'size': '0.04'\n}\ns = requests.get('https://api.nationalflooddata.com/floodmapraw', headers=headers, params=payload)\n"
+          }
+        ]
+      }
+    },
+    "/dynamic.html": {
+      "servers": [
+        {
+          "url": "https://www.nationalflooddata.com/v3/",
+          "description": "Flood Map Server"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Dynamic Map"
+        ],
+        "summary": "The map provided is dynamic, i.e. the user may zoom and pan within a small range.",
+        "operationId": "dynamicFloodMap",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "description": "authentication key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "zoom",
+            "in": "query",
+            "description": "integer parameter between 6 (low zoom) and 17 (high zoom).",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 6,
+              "maximum": 17,
+              "default": 15
+            }
+          },
+          {
+            "name": "showLegend",
+            "in": "query",
+            "description": "true to show the legend; any other value false.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/staticmap": {
+      "servers": [
+        {
+          "url": "https://api.nationalflooddata.com/v3/",
+          "description": "Flood Map Server"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "X-API-KEY",
+          "in": "header",
+          "description": "API Key needed for authentication",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Static Map"
+        ],
+        "summary": "The static map returns a png image with a marker at the latitude and longitude provided.",
+        "operationId": "staticFloodMap",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "default": 0.08
+            }
+          },
+          {
+            "name": "height",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "width",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "showMarker",
+            "in": "query",
+            "description": "if marker is set to false, no marker will be shown",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "showLegend",
+            "in": "query",
+            "description": "if legend is set to false, no legend will be shown",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "zoom",
+            "in": "query",
+            "description": "integer parameter between 14 (low zoom) and 16 (high zoom)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 14,
+              "maximum": 16,
+              "default": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FloodDataBatch": {
+        "type": "object",
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "description": "Unique id of batch"
+          },
+          "result": {
+            "type": "string",
+            "description": "Presigned url for S3 object containing batch result. The schema for the object at this url is an array of types as for flood data."
+          }
+        }
+      },
+      "FloodData": {
+        "type": "object",
+        "properties": {
+          "parceladdress": {
+            "$ref": "#/components/schemas/ParcelAddress"
+          },
+          "geocode": {
+            "$ref": "#/components/schemas/Geocode"
+          },
+          "coords": {
+            "$ref": "#/components/schemas/Coords"
+          },
+          "result": {
+            "$ref": "#/components/schemas/FemaResult"
+          },
+          "match_type": {
+            "description": "The type of match - may differ from search type if e.g. no parcel is found for an `addressparcel` the system will default to `addresscoord`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "addresscoord",
+                "addressparcel",
+                "coord",
+                "coordparcel",
+                "polygon"
+              ]
+            }
+          }
+        }
+      },
+      "Coords": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "description": "coordinate's latitude",
+            "type": [
+              "number",
+              "string"
+            ]
+          },
+          "lng": {
+            "description": "coordinate's longitude",
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        }
+      },
+      "CensusBureau": {
+        "type": "object",
+        "properties": {
+          "census_block": {
+            "description": "census tract number (State id + county id + census tract + block group number)",
+            "type": "string",
+            "example": "120990035092"
+          },
+          "cbsa": {
+            "type": "object",
+            "properties": {
+              "cbsafp": {
+                "description": "the cbsafp",
+                "type": "string",
+                "example": "42600"
+              },
+              "name": {
+                "description": "the cbsa name",
+                "type": "string",
+                "example": "example cbsa name"
+              }
+            }
+          },
+          "metdiv": {
+            "type": "object",
+            "properties": {
+              "metdivfp": {
+                "description": "the metdivfp",
+                "type": "string",
+                "example": "42644"
+              },
+              "name": {
+                "description": "the metdiv name",
+                "type": "string",
+                "example": "example metdiv name"
+              }
+            }
+          }
+        }
+      },
+      "Community": {
+        "type": "object",
+        "properties": {
+          "firm": {
+            "description": "firm",
+            "type": [
+              "string"
+            ]
+          },
+          "regemer_sanction": {
+            "description": "Date of regemer sanction. Returned as unformatted text.",
+            "type": "string",
+            "example": "05/15/78    "
+          },
+          "tribal": {
+            "description": "Whether or not the community is identified as Tribal in the NFIP Community Status Book",
+            "type": "string",
+            "example": "No      "
+          },
+          "notes": {
+            "description": "firm",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "comm_name": {
+            "description": "firm",
+            "type": [
+              "string"
+            ]
+          },
+          "comm_part": {
+            "description": "Community participation. See the [NFIP Community Status Book](https://www.fema.gov/national-flood-insurance-program-community-status-book)",
+            "type": "boolean",
+            "example": true
+          },
+          "fhbm": {
+            "description": "Date of first flood hazard boundary map. Returned as unformatted text.",
+            "type": "string",
+            "example": "09/13/74    "
+          },
+          "curreff": {
+            "description": "Date current firm became effective. Returned as unformatted text. Can be several weeks into the future, in which case (>) follows the date. The date may also be followed by (M) for \"No elevation determined\", (S) for \"Suspended Community\" or (E) for \"Indicates Entry in Emergency Program\"notes",
+            "type": "string",
+            "example": "10/05/17    "
+          }
+        }
+      },
+      "FemaResult": {
+        "type": "object",
+        "description": "The FEMA Flood Data API returns data from interstections of the parcel with feature layers of FEMA shapefiles, as well as the community participation status and the census tract number.",
+        "properties": {
+          "loma": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/loma"
+            }
+          },
+          "flood.s_firm_pan": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/s_firm_pan"
+            }
+          },
+          "flood.s_fld_haz_ar": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/s_fld_haz_ar"
+            }
+          },
+          "flood.s_pol_ar": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/s_pol_ar"
+            }
+          },
+          "census_bureau": {
+            "$ref": "#/components/schemas/CensusBureau"
+          },
+          "community": {
+            "$ref": "#/components/schemas/Community"
+          },
+          "elevation": {
+            "type": "object",
+            "properties": {
+              "propertyelevation": {
+                "type": "number",
+                "example": 268.38
+              },
+              "flood.basefloodelevation": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "bfe_ln_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "bfe_type": {
+                      "type": "string",
+                      "example": "provided"
+                    },
+                    "dfirm_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "example": "12099C"
+                    },
+                    "distkm": {
+                      "type": "number",
+                      "example": 0
+                    },
+                    "elevation": {
+                      "type": "string",
+                      "example": "6.0"
+                    },
+                    "fld_ar_id": {
+                      "type": "string",
+                      "example": "12099C_20008"
+                    },
+                    "fld_zone": {
+                      "type": "string",
+                      "example": "AE"
+                    },
+                    "len_unit": {
+                      "type": "string",
+                      "example": "Feet"
+                    },
+                    "v_datum": {
+                      "type": "string",
+                      "example": "NAVD88"
+                    },
+                    "zone_subty": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              },
+              "coastline": {
+                "description": "list of nearest coastline, if any; one dictionary per intersection.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "distkm": {
+                      "type": "number",
+                      "example": 0.183983579961924
+                    },
+                    "ogc_fid": {
+                      "type": "integer",
+                      "example": 3442
+                    }
+                  }
+                }
+              },
+              "waterbody": {
+                "description": "list of nearest bodies of water, if any; one dictionary per intersection.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "areasqkm": {
+                      "type": "string",
+                      "example": "29.66"
+                    },
+                    "distkm": {
+                      "type": "number",
+                      "example": 0.183983579961924
+                    },
+                    "gnis_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "example": "00293537"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "example": "Lake Worth"
+                    },
+                    "objectid": {
+                      "type": "string",
+                      "example": "67454"
+                    },
+                    "ogc_fid": {
+                      "type": "integer",
+                      "example": 3442
+                    },
+                    "state": {
+                      "type": "string",
+                      "example": "Florida"
+                    }
+                  }
+                }
+              },
+              "stormsurge": {
+                "$ref": "#/components/schemas/StormSurgeResult"
+              }
+            }
+          },
+          "property": {
+            "type": "object",
+            "properties": {
+              "sqft": {
+                "description": "squarefeet of the property queried",
+                "type": "string",
+                "nullable": true,
+                "example": "1200"
+              },
+              "yearbuilt": {
+                "description": "year the property queried was built",
+                "type": "string",
+                "nullable": true,
+                "example": "2001"
+              },
+              "propertyusedescription": {
+                "description": "description of property use",
+                "type": "string",
+                "nullable": true,
+                "example": "Multi Family: Multi-family Dwellings (Generic, Any Combination)"
+              },
+              "constructiondesc": {
+                "description": "description of construction",
+                "type": "string",
+                "nullable": true,
+                "example": "23"
+              },
+              "storiescount": {
+                "description": "number of stories",
+                "type": "string",
+                "nullable": true,
+                "example": "3"
+              },
+              "fireresistance": {
+                "description": "fire resistance rating",
+                "type": "string",
+                "nullable": true,
+                "example": ""
+              },
+              "parkinggaragetype": {
+                "description": "type of parking garage",
+                "type": "string",
+                "nullable": true,
+                "example": ""
+              },
+              "parkinggaragearea": {
+                "description": "area of parking garage",
+                "type": "string",
+                "nullable": true,
+                "example": "0"
+              }
+            }
+          }
+        }
+      },
+      "StormSurgeResult": {
+        "type": "object",
+        "description": "estimated flood water in the event of a storm",
+        "properties": {
+          "1": {
+            "description": "estimated flood water in the event of a category 1 storm",
+            "type": [
+              "number",
+              "null"
+            ],
+            "nullable": true,
+            "example": null
+          },
+          "2": {
+            "description": "estimated flood water in the event of a category 2 storm",
+            "type": [
+              "number",
+              "null"
+            ],
+            "nullable": true,
+            "example": 1
+          },
+          "3": {
+            "description": "estimated flood water in the event of a category 3 storm",
+            "type": [
+              "number",
+              "null"
+            ],
+            "nullable": true,
+            "example": 1
+          },
+          "4": {
+            "description": "estimated flood water in the event of a category 4 storm",
+            "type": [
+              "number",
+              "null"
+            ],
+            "nullable": true,
+            "example": 3
+          },
+          "5": {
+            "description": "estimated flood water in the event of a category 5 storm",
+            "type": [
+              "number",
+              "null"
+            ],
+            "nullable": true,
+            "example": 3
+          }
+        }
+      },
+      "s_fld_haz_ar": {
+        "type": "object",
+        "description": "FEMA Layer s_fld_haz_ar",
+        "properties": {
+          "fld_ar_id": {
+            "description": "polygon id",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "12099C_20011"
+          },
+          "version_id": {
+            "description": "version id",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "1.1.1.0"
+          },
+          "sfha_tf": {
+            "description": "special flood hazard area",
+            "type": "string",
+            "example": "T"
+          },
+          "zone_subty": {
+            "description": "text description of zone, available occasionally",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_cit": {
+            "description": "source",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "12099C_STUDY1"
+          },
+          "fld_zone": {
+            "description": "flood zone",
+            "type": "string",
+            "example": "AE"
+          },
+          "dfirm_id": {
+            "description": "flood insurance rate map id",
+            "type": "string",
+            "example": "12099C"
+          }
+        }
+      },
+      "loma": {
+        "type": "object",
+        "description": "LOMA",
+        "properties": {
+          "casenumber": {
+            "type": "string",
+            "example": "14-05-8454A"
+          },
+          "cid": {
+            "type": "string",
+            "example": "390319"
+          },
+          "communityn": {
+            "type": "string",
+            "example": "PAINESVILLE, CITY OF"
+          },
+          "dateended": {
+            "type": "string",
+            "example": "2014-09-04"
+          },
+          "determinat": {
+            "type": "string",
+            "example": "DetermLetter"
+          },
+          "lat": {
+            "type": "string",
+            "example": "41.170999999999999"
+          },
+          "lon": {
+            "type": "string",
+            "example": "-81.260999999999996"
+          },
+          "miles": {
+            "type": "number",
+            "example": 0.0012070620614019194
+          },
+          "pdfhyperli": {
+            "type": "string",
+            "example": "14-05-8454A-390319"
+          },
+          "pdflink": {
+            "type": "string",
+            "example": "https://msc.fema.gov/portal/downloadProduct?productID=14-05-8454A-390319"
+          },
+          "projectcat": {
+            "type": "string",
+            "example": "LOMA"
+          },
+          "projectnam": {
+            "type": "string",
+            "example": "THE PAINESVILLE INDUSTRIAL PARK SUBDIVISION, SUBLOT 12 -- 440 WEST PROSPECT STREET"
+          },
+          "status": {
+            "type": "string",
+            "example": "Completed"
+          }
+        }
+      },
+      "s_firm_pan": {
+        "type": "object",
+        "description": "FEMA layer s_firm_pan",
+        "properties": {
+          "suffix": {
+            "example": "F"
+          },
+          "pnp_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firm_pan": {
+            "description": "NFIP Map Number of Community-Panel Number onb a Standard Flood Hazard Determination Form",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "12099C0583F"
+          },
+          "eff_date": {
+            "description": "effective date",
+            "type": "string",
+            "example": "2017-10-05"
+          },
+          "firm_id": {
+            "description": "polygon id",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "12099C_185"
+          },
+          "dfirm_id": {
+            "description": "flood insurance rate map id",
+            "type": "string",
+            "example": "12099C"
+          },
+          "st_fips": {
+            "description": "state id or fips",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "12"
+          },
+          "panel_typ": {
+            "description": "panel type (e.g. countywide, village, city)",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Countywide, Panel Printed"
+          },
+          "panel": {
+            "description": "panel",
+            "type": "string",
+            "example": "0583"
+          }
+        }
+      },
+      "s_pol_ar": {
+        "type": "object",
+        "description": "FEMA Layer s_pol_ar",
+        "properties": {
+          "comm_no": {
+            "description": "community number",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "0220"
+          },
+          "pol_name1": {
+            "description": "municipal name, e.g. city or county",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Town Of Palm Beach"
+          },
+          "co_fips": {
+            "description": "county id or county fips",
+            "type": "string",
+            "example": "099"
+          },
+          "cid": {
+            "description": "community id or number",
+            "type": "string",
+            "example": "120220"
+          },
+          "com_nfo_id": {
+            "description": "community id (state id + community number)",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "12099C_28"
+          },
+          "pol_ar_id": {
+            "description": "polygon id",
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "12099C_16"
+          }
+        }
+      },
+      "Geocode": {
+        "type": "object",
+        "description": "National Flood Data uses the MapBox geocoder, and the geocode fields are those returned by MapBox",
+        "properties": {
+          "relevance": {
+            "description": "the quality of the match on a range from 0 to 1.",
+            "type": "integer",
+            "example": 1
+          },
+          "matchLevel": {
+            "description": "the level at which the match was made",
+            "type": "string",
+            "example": "houseNumber"
+          },
+          "label": {
+            "description": "text description of the address.",
+            "type": "string",
+            "example": "521 Saguaro Dr, Fort Worth, TX 76177, United States"
+          },
+          "latitude": {
+            "description": "Geocode latitude",
+            "type": "number",
+            "example": 26.70319
+          },
+          "longitude": {
+            "description": "Geocode longitude",
+            "type": "number",
+            "example": -80.04238
+          }
+        }
+      },
+      "ParcelAddress": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "description": "Parcel's id",
+            "type": "string",
+            "example": "50434323050050450"
+          },
+          "city": {
+            "description": "Parcel's city",
+            "type": "string",
+            "example": "PALM BEACH"
+          },
+          "municipality": {
+            "description": "Parcel's municipality name",
+            "type": "string",
+            "example": "West Palm Beach"
+          },
+          "county_id": {
+            "description": "Parcel's county id",
+            "type": "string",
+            "example": "12099"
+          },
+          "county": {
+            "description": "Parcel's county",
+            "type": "string",
+            "example": "Palm Beach"
+          },
+          "state": {
+            "description": "Parcel's state abbreviation",
+            "type": "string",
+            "example": "FL"
+          },
+          "zip": {
+            "description": "Parcel's zip code",
+            "type": "string",
+            "example": "33480"
+          },
+          "addr_street_prefix": {
+            "description": "Parcel's street prefix",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "addr_number": {
+            "description": "Parcel's address number",
+            "type": "string",
+            "example": "430"
+          },
+          "addr_street_name": {
+            "description": "Parcel's street name",
+            "type": "string",
+            "example": "AUSTRALIAN"
+          },
+          "addr_street_type": {
+            "description": "Parcel's street type",
+            "type": "string",
+            "example": "Ave"
+          },
+          "addr_street_suffix": {
+            "description": "Parcel's street suffix",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "FloodMapContent": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/FloodMapContentResult"
+          }
+        }
+      },
+      "FloodMapContentResult": {
+        "type": "object",
+        "properties": {
+          "bfelist": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BFEListItem"
+            }
+          },
+          "floodregions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FloodRegion"
+            }
+          }
+        }
+      },
+      "BFEListItem": {
+        "type": "object",
+        "properties": {
+          "bfe_ln_id": {
+            "description": "line identifier",
+            "type": "string",
+            "example": "06037C_1842"
+          },
+          "v_datum": {
+            "description": "[vertical datum](https://en.wikipedia.org/wiki/Template:NGVD29)",
+            "type": "string",
+            "example": "NAVD88"
+          },
+          "distkm": {
+            "description": "shortest distance from query point to line in km",
+            "type": "integer",
+            "example": 2.36056507085
+          },
+          "version_id": {
+            "description": "version identifier",
+            "type": "string",
+            "example": "2.3.3.2"
+          },
+          "source_cit": {
+            "description": "source citation",
+            "type": "string",
+            "example": "06037C_STUDY10"
+          },
+          "geojson": {
+            "description": "BFE lines in geojson",
+            "type": "string",
+            "example": "{\"type\":\"LineString\",\"coordinates\":[[-118.257285374615,34.0505893496427],[-118.25697976635,34.0505244789197]]}"
+          },
+          "elev": {
+            "description": "elevation in feet",
+            "type": "integer",
+            "example": 287
+          },
+          "dfirm_id": {
+            "description": "flood insurance rate map id",
+            "type": "string",
+            "example": "06037C"
+          },
+          "len_unit": {
+            "type": "string",
+            "example": "Feet"
+          },
+          "ogc_fid": {
+            "description": "polygon id",
+            "type": "integer",
+            "example": 4846389
+          }
+        }
+      },
+      "FloodRegion": {
+        "type": "object",
+        "properties": {
+          "fld_ar_id": {
+            "type": "string",
+            "example": "06037C_2140"
+          },
+          "distkm": {
+            "description": "shortest distance from query point to polygon in km",
+            "type": "integer",
+            "example": 2.2775802896
+          },
+          "geojson": {
+            "description": "flood polygon in geojson",
+            "type": "string",
+            "example": "{\"type\":\"Polygon\",\"coordinates\":[[[-118.269068464616,34.0527995184363], ...]]}"
+          },
+          "zone_subty": {
+            "description": "zone description",
+            "type": "string",
+            "example": "0.2 PCT ANNUAL CHANCE FLOOD HAZARD"
+          },
+          "fld_zone": {
+            "description": "flood zone",
+            "type": "string",
+            "example": "X"
+          },
+          "dfirm_id": {
+            "description": "flood insurance rate map id",
+            "type": "string",
+            "example": "06037C"
+          },
+          "ogc_fid": {
+            "description": "polygon id",
+            "type": "integer",
+            "example": 12441534
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "x-api-key": {
+        "description": "Required API Key",
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    }
+  }
+}
