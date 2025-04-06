@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 type Geocode struct {
 	// Relevance indicates the relevance score of the geocode result, typically used to rank results.

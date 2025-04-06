@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // FloodFirmPan represents the details of a flood insurance rate map (FIRM) panel.
 // It contains information about the specific panel used in flood mapping.

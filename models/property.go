@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // Property represents property data, including various attributes related to the structure and use of the property.
 type Property struct {

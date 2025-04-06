@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // StormSurge represents estimated flood water levels in the event of storms of varying categories.
 type StormSurge struct {

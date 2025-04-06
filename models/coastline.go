@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // Coastline represents a segment of the coastline with specific attributes.
 type Coastline struct {
@@ -6,5 +6,5 @@ type Coastline struct {
 	DistKm float64 `json:"distkm"`
 
 	// OgcFid is the unique identifier for the feature in the Open Geospatial Consortium (OGC) format.
-	OgcFid int `json:"ogc_fid"`
+	OgcFid int64 `json:"ogc_fid"`
 }

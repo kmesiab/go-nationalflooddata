@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 type MetDiv struct {
 	// Metdivfp is likely the Federal Information Processing Standards (FIPS) code for the metropolitan division.
