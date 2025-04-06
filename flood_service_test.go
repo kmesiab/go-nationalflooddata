@@ -10,7 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	go_nationalflooddata "github.com/kmesiab/go-nationalflooddata"
+	"github.com/kmesiab/go-nationalflooddata"
+	"github.com/kmesiab/go-nationalflooddata/client"
 )
 
 // Do Request Tests
@@ -273,7 +274,7 @@ func TestDoRequest_ShouldParseAndReturnErrorResponseForHTTPStatusCodes400AndAbov
 		t.Errorf("expected status code to be 400, got %d", resp.StatusCode)
 	}
 
-	var invalidRequestErr *go_nationalflooddata.InvalidRequestError
+	var invalidRequestErr *client.InvalidRequestError
 	if !errors.As(err, &invalidRequestErr) {
 		t.Errorf("expected error to be of type InvalidRequestError, got %T", err)
 	}
