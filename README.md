@@ -125,7 +125,7 @@ if err != nil {
 fmt.Printf("Batch ID: %s - poll results at: %s\n", batchResp.BatchID, batchResp.Result)
 ```
 
-## Retrieving Static Flood Map
+### Retrieving Static Flood Map
 
 To retrieve a static flood map image, use the `GetStaticFloodMap` method.
 This method returns the image data as a byte slice.
@@ -148,7 +148,7 @@ if err != nil {
 fmt.Printf("Static Map Image Data: %d bytes\n", len(staticMap))
 ```
 
-## Retrieving Dynamic Flood Map
+### Retrieving Dynamic Flood Map
 
 To retrieve a dynamic flood map, use the `GetDynamicFloodMap` method. This
 method returns the HTML content as a string.
@@ -168,6 +168,35 @@ if err != nil {
 fmt.Printf("Dynamic Map HTML: %s\n", dynamicMap)
 ```
 
+### Retrieving Flood Vector Tile
+
+To retrieve a flood vector tile, use the `GetFloodVectorTile` method. This
+method returns the raw tile data as a byte slice.
+
+```go
+z, x, y := 10, 512, 512
+vectorTile, err := svc.GetFloodVectorTile(ctx, z, x, y)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("Flood Vector Tile Data: %d bytes\n", len(vectorTile))
+```
+
+### Retrieving Storm Surge Tile
+
+To retrieve a storm surge tile, use the `GetStormSurgeTile` method. This
+method returns the raw tile data as a byte slice.
+
+```go
+category := "category1"
+z, x, y := 10, 512, 512
+stormSurgeTile, err := svc.GetStormSurgeTile(ctx, category, z, x, y)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("Storm Surge Tile Data: %d bytes\n", len(stormSurgeTile))
+```
+
 ---
 
 ## Sample JSON Files
@@ -178,16 +207,16 @@ data returned by the National Flood Data API and how the package processes and
 sanitizes this data.
 
 - **[Sample Flood Data](docs/sample_flood_data.json)**: This file contains a
-full response payload from the API. It includes all the data fields returned
-by the API for a flood data query, providing a comprehensive view of the
-information available.
+  full response payload from the API. It includes all the data fields returned
+  by the API for a flood data query, providing a comprehensive view of the
+  information available.
 
 - **[Sanitized Sample Flood Data](docs/sanitized_sample_flood_data.json)**: This
-file represents the same response payload as the sample flood data, but after
-it has been processed by the package's `sanitizeResponse` function. The
-sanitization process removes trailing spaces and replaces "Access Denied"
-strings with `nil`, ensuring the data is clean and consistent for further
-processing.
+  file represents the same response payload as the sample flood data, but after
+  it has been processed by the package's `sanitizeResponse` function. The
+  sanitization process removes trailing spaces and replaces "Access Denied"
+  strings with `nil`, ensuring the data is clean and consistent for further
+  processing.
 
 > These sample files can be used as references when developing and testing
 > your application to ensure it correctly handles the API responses.
