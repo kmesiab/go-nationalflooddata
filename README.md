@@ -155,11 +155,11 @@ method returns the HTML content as a string.
 
 ```go
 dynamicMap, err := svc.GetDynamicFloodMap(ctx, 
-	"your-api-key", 
-	34.071783, 
-	-118.2596, 
-	13, 
-	true,
+   "your-api-key", 
+   34.071783, 
+   -118.2596, 
+   13, 
+   true,
 )
 
 if err != nil {
@@ -167,6 +167,32 @@ if err != nil {
 }
 fmt.Printf("Dynamic Map HTML: %s\n", dynamicMap)
 ```
+
+---
+
+## Sample JSON Files
+
+In the `/docs/` directory, you will find sample JSON files that demonstrate
+the structure of API responses. These files are useful for understanding the
+data returned by the National Flood Data API and how the package processes and
+sanitizes this data.
+
+- **[Sample Flood Data](docs/sample_flood_data.json)**: This file contains a
+full response payload from the API. It includes all the data fields returned
+by the API for a flood data query, providing a comprehensive view of the
+information available.
+
+- **[Sanitized Sample Flood Data](docs/sanitized_sample_flood_data.json)**: This
+file represents the same response payload as the sample flood data, but after
+it has been processed by the package's `sanitizeResponse` function. The
+sanitization process removes trailing spaces and replaces "Access Denied"
+strings with `nil`, ensuring the data is clean and consistent for further
+processing.
+
+> These sample files can be used as references when developing and testing
+> your application to ensure it correctly handles the API responses.
+
+---
 
 ## Error Handling
 

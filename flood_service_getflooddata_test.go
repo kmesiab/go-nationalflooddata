@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	go_nationalflooddata "github.com/kmesiab/go-nationalflooddata"
+	"github.com/kmesiab/go-nationalflooddata/client"
 )
 
 func TestGetFloodData_ShouldReturnErrorWhenDoRequestFails(t *testing.T) {
@@ -17,7 +18,7 @@ func TestGetFloodData_ShouldReturnErrorWhenDoRequestFails(t *testing.T) {
 	service := go_nationalflooddata.NewService(apiKey)
 
 	ctx := context.Background()
-	opts := go_nationalflooddata.FloodDataOptions{
+	opts := client.FloodDataOptions{
 		SearchType: "address",
 		Address:    "123 Test St",
 	}
@@ -45,7 +46,7 @@ func TestGetFloodData_ShouldReturnErrorWhenSanitizeResponseFails(t *testing.T) {
 	service := go_nationalflooddata.NewService(apiKey)
 
 	ctx := context.Background()
-	opts := go_nationalflooddata.FloodDataOptions{
+	opts := client.FloodDataOptions{
 		SearchType: "address",
 		Address:    "123 Test St",
 	}
@@ -77,7 +78,7 @@ func TestGetFloodData_ShouldReturnErrorWhenJSONUnmarshalFails(t *testing.T) {
 	service := go_nationalflooddata.NewService(apiKey)
 
 	ctx := context.Background()
-	opts := go_nationalflooddata.FloodDataOptions{
+	opts := client.FloodDataOptions{
 		SearchType: "address",
 		Address:    "123 Test St",
 	}
