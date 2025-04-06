@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // Elevation represents various elevation-related data for a property, including flood and storm surge information.
 type Elevation struct {

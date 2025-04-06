@@ -125,6 +125,49 @@ if err != nil {
 fmt.Printf("Batch ID: %s - poll results at: %s\n", batchResp.BatchID, batchResp.Result)
 ```
 
+## Retrieving Static Flood Map
+
+To retrieve a static flood map image, use the `GetStaticFloodMap` method.
+This method returns the image data as a byte slice.
+
+```go
+staticMapOpts := nfd.StaticMapOptions{
+    Lat:        34.071783,
+    Lng:        -118.2596,
+    Height:     600,
+    Width:      800,
+    ShowMarker: true,
+    ShowLegend: true,
+    Zoom:       13,
+}
+
+staticMap, err := svc.GetStaticFloodMap(ctx, staticMapOpts)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("Static Map Image Data: %d bytes\n", len(staticMap))
+```
+
+## Retrieving Dynamic Flood Map
+
+To retrieve a dynamic flood map, use the `GetDynamicFloodMap` method. This
+method returns the HTML content as a string.
+
+```go
+dynamicMap, err := svc.GetDynamicFloodMap(ctx, 
+	"your-api-key", 
+	34.071783, 
+	-118.2596, 
+	13, 
+	true,
+)
+
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("Dynamic Map HTML: %s\n", dynamicMap)
+```
+
 ## Error Handling
 
 The package provides custom error types for handling different API error

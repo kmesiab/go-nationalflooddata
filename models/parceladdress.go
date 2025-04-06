@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // ParcelAddress represents address data for a parcel
 type ParcelAddress struct {

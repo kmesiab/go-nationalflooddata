@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // FloodZoneExplanation represents the explanation for different flood zone designations.
 type FloodZoneExplanation map[string]string

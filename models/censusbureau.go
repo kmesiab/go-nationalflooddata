@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // CensusBureau represents data related to the U.S. Census Bureau, including census blocks and statistical areas.
 type CensusBureau struct {

@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // FloodPolAr represents a flood policy area with specific identifiers and names.
 type FloodPolAr struct {

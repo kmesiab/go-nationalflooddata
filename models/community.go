@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // Community represents information about a community's participation in the National Flood Insurance Program (NFIP).
 type Community struct {

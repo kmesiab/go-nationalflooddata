@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 type Waterbody struct {
 	// AreaSqKm is the area of the waterbody in square kilometers.
@@ -17,7 +17,7 @@ type Waterbody struct {
 	ObjectID string `json:"objectid"`
 
 	// OgcFid is the unique identifier for the feature in the Open Geospatial Consortium (OGC) format.
-	OgcFid int `json:"ogc_fid"`
+	OgcFid int64 `json:"ogc_fid"`
 
 	// State is the state where the waterbody is located.
 	State string `json:"state"`

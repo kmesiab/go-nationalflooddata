@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/kmesiab/go-nationalflooddata/client"
 )
 
 // Service is the main client for interacting with the National Flood Data API.
@@ -86,7 +88,7 @@ func (s *Service) DoRequest(
 
 	if resp.StatusCode >= 400 {
 		// Attempt to parse the response as an error payload
-		apiErr := &ErrorResponse{
+		apiErr := &client.ErrorResponse{
 			Response: resp,
 			Status:   resp.StatusCode,
 			Message:  http.StatusText(resp.StatusCode),
@@ -100,7 +102,7 @@ func (s *Service) DoRequest(
 }
 
 // ParseError looks at the status code in ErrorResponse and returns the correct typed error.
-func ParseError(e *ErrorResponse) error {
+func ParseError(e *client.ErrorResponse) error {
 
 	if e == nil {
 		return e
@@ -108,17 +110,17 @@ func ParseError(e *ErrorResponse) error {
 
 	switch e.Status {
 	case 400:
-		return &InvalidRequestError{ErrorResponse: e}
+		return &client.InvalidRequestError{ErrorResponse: e}
 	case 401:
-		return &AuthenticationError{ErrorResponse: e}
+		return &client.AuthenticationError{ErrorResponse: e}
 	case 402:
-		return &NoDataAvailableError{ErrorResponse: e}
+		return &client.NoDataAvailableError{ErrorResponse: e}
 	case 404:
-		return &LocationNotFoundError{ErrorResponse: e}
+		return &client.LocationNotFoundError{ErrorResponse: e}
 	case 405:
-		return &ParcelNotFoundError{ErrorResponse: e}
+		return &client.ParcelNotFoundError{ErrorResponse: e}
 	case 500:
-		return &InternalServerError{ErrorResponse: e}
+		return &client.InternalServerError{ErrorResponse: e}
 	default:
 		return e // fallback: return the generic *ErrorResponse
 	}
@@ -129,7 +131,7 @@ func ParseError(e *ErrorResponse) error {
 // -----------------------------------------------------------------------------
 
 // GetFloodData queries the /data endpoint for FEMA Flood Data. It returns a FloodData struct.
-func (s *Service) GetFloodData(ctx context.Context, opts FloodDataOptions) (*Response, error) {
+func (s *Service) GetFloodData(ctx context.Context, opts client.FloodDataOptions) (*client.Response, error) {
 	// Build query parameters from FloodDataOptions
 	q := url.Values{}
 	q.Set("searchtype", string(opts.SearchType))
@@ -171,7 +173,7 @@ func (s *Service) GetFloodData(ctx context.Context, opts FloodDataOptions) (*Res
 		return nil, err
 	}
 
-	var fd Response
+	var fd client.Response
 	if err := json.Unmarshal([]byte(sanitizedResponse), &fd); err != nil {
 		return nil, fmt.Errorf("json unmarshal FloodData: %w", err)
 	}
@@ -265,7 +267,7 @@ func sanitizeSlice(data []interface{}) {
 
 // GetFloodMapRaw queries the /floodmapraw endpoint for the raw FEMA Flood Map polygons.
 // This often returns large geojson content. The structure is defined by FloodMapContent.
-func (s *Service) GetFloodMapRaw(ctx context.Context, opts FloodMapRawOptions) (*FloodMapContent, error) {
+func (s *Service) GetFloodMapRaw(ctx context.Context, opts client.FloodMapRawOptions) (*client.FloodMapContent, error) {
 	q := url.Values{}
 	q.Set("lat", strconv.FormatFloat(opts.Lat, 'f', -1, 64))
 	q.Set("lng", strconv.FormatFloat(opts.Lng, 'f', -1, 64))
@@ -283,7 +285,7 @@ func (s *Service) GetFloodMapRaw(ctx context.Context, opts FloodMapRawOptions) (
 		return nil, err
 	}
 
-	var content FloodMapContent
+	var content client.FloodMapContent
 	if err := json.Unmarshal(raw, &content); err != nil {
 		return nil, fmt.Errorf("json unmarshal FloodMapContent: %w", err)
 	}
@@ -297,7 +299,7 @@ func (s *Service) GetFloodMapRaw(ctx context.Context, opts FloodMapRawOptions) (
 
 // GetFloodDataBatch posts a batch request to /databatch. It returns immediately with a
 // FloodDataBatch that contains a batch_id and a URL in `Result` which you can poll.
-func (s *Service) GetFloodDataBatch(ctx context.Context, batch BatchDataRequest) (*FloodDataBatch, error) {
+func (s *Service) GetFloodDataBatch(ctx context.Context, batch client.BatchDataRequest) (*client.FloodDataBatch, error) {
 	// The batch JSON must contain "apiKey" at the top level as the spec indicates,
 	// but we also set the X-API-KEY header. Usually, these match.
 	if batch.APIKey == "" {
@@ -314,9 +316,83 @@ func (s *Service) GetFloodDataBatch(ctx context.Context, batch BatchDataRequest)
 		return nil, reqErr
 	}
 
-	var resp FloodDataBatch
+	var resp client.FloodDataBatch
 	if err := json.Unmarshal(raw, &resp); err != nil {
 		return nil, fmt.Errorf("json unmarshal FloodDataBatch: %w", err)
 	}
 	return &resp, nil
+}
+
+// -----------------------------------------------------------------------------
+//  GetFloodVectorTile
+// -----------------------------------------------------------------------------
+
+// GetFloodVectorTile queries the /tiles/flood-vector/{z}/{x}/{y}.mvt endpoint for flood vector tiles.
+// It returns the raw tile data as a byte slice.
+func (s *Service) GetFloodVectorTile(ctx context.Context, z, x, y int) ([]byte, error) {
+	path := fmt.Sprintf("/tiles/flood-vector/%d/%d/%d.mvt", z, x, y)
+	raw, _, err := s.DoRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
+
+// -----------------------------------------------------------------------------
+//  GetStormSurgeTile
+// -----------------------------------------------------------------------------
+
+// GetStormSurgeTile queries the /tiles/stormsurge/{category}/{z}/{x}/{y}.png endpoint for storm surge tiles.
+// It returns the raw tile data as a byte slice.
+func (s *Service) GetStormSurgeTile(ctx context.Context, category string, z, x, y int) ([]byte, error) {
+	path := fmt.Sprintf("/tiles/stormsurge/%s/%d/%d/%d.png", category, z, x, y)
+	raw, _, err := s.DoRequest(ctx, http.MethodGet, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
+
+// -----------------------------------------------------------------------------
+//  GetDynamicFloodMap
+// -----------------------------------------------------------------------------
+
+// GetDynamicFloodMap queries the /dynamic.html endpoint for the dynamic flood map.
+// It returns the HTML content as a string.
+func (s *Service) GetDynamicFloodMap(ctx context.Context, key string, lat, lng float64, zoom int, showLegend bool) (string, error) {
+	q := url.Values{}
+	q.Set("key", key)
+	q.Set("lat", strconv.FormatFloat(lat, 'f', -1, 64))
+	q.Set("lng", strconv.FormatFloat(lng, 'f', -1, 64))
+	q.Set("zoom", strconv.Itoa(zoom))
+	q.Set("showLegend", strconv.FormatBool(showLegend))
+
+	raw, _, err := s.DoRequest(ctx, http.MethodGet, "/dynamic.html", q, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(raw), nil
+}
+
+// -----------------------------------------------------------------------------
+//  GetStaticFloodMap
+// -----------------------------------------------------------------------------
+
+// GetStaticFloodMap queries the /staticmap endpoint for the static flood map.
+// It returns the image data as a byte slice.
+func (s *Service) GetStaticFloodMap(ctx context.Context, opts client.StaticMapOptions) ([]byte, error) {
+	q := url.Values{}
+	q.Set("lat", strconv.FormatFloat(opts.Lat, 'f', -1, 64))
+	q.Set("lng", strconv.FormatFloat(opts.Lng, 'f', -1, 64))
+	q.Set("height", strconv.Itoa(opts.Height))
+	q.Set("width", strconv.Itoa(opts.Width))
+	q.Set("showMarker", strconv.FormatBool(opts.ShowMarker))
+	q.Set("showLegend", strconv.FormatBool(opts.ShowLegend))
+	q.Set("zoom", strconv.Itoa(opts.Zoom))
+
+	raw, _, err := s.DoRequest(ctx, http.MethodGet, "/staticmap", q, nil)
+	if err != nil {
+		return nil, err
+	}
+	return raw, nil
 }

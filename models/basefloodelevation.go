@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // BaseFloodElevation represents the details of a base flood elevation (BFE) area.
 type BaseFloodElevation struct {
@@ -12,7 +12,7 @@ type BaseFloodElevation struct {
 	DfirmID string `json:"dfirm_id"`
 
 	// DistKm is the distance in kilometers from a reference point to the BFE line.
-	DistKm int `json:"distkm"`
+	DistKm float64 `json:"distkm"`
 
 	// Elevation is the elevation value of the base flood elevation.
 	Elevation string `json:"elevation"`
@@ -54,7 +54,7 @@ type BFEListItem struct {
 	GeoJSON string `json:"geojson"`
 
 	// Elev is the elevation value of the base flood elevation.
-	Elev int `json:"elev"`
+	Elev float64 `json:"elev"`
 
 	// DfirmID is the identifier for the Digital Flood Insurance Rate Map (DFIRM).
 	DfirmID string `json:"dfirm_id"`
@@ -63,5 +63,5 @@ type BFEListItem struct {
 	LenUnit string `json:"len_unit"`
 
 	// OgcFID is the unique identifier for the feature in the Open Geospatial Consortium (OGC) format.
-	OgcFID int `json:"ogc_fid"`
+	OgcFID int64 `json:"ogc_fid"`
 }

@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // CBSA represents a Core-Based Statistical Area, which is a U.S. geographic area defined by the Office of Management and Budget.
 type CBSA struct {

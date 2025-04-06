@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 type Coords struct {
 	Lat string `json:"lat"`

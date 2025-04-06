@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // FloodRegion represents a flood region
 type FloodRegion struct {
@@ -21,5 +21,5 @@ type FloodRegion struct {
 	DfirmID string `json:"dfirm_id"`
 
 	// OgcFID is the unique identifier for the feature in the Open Geospatial Consortium (OGC) format.
-	OgcFID int `json:"ogc_fid"`
+	OgcFID int64 `json:"ogc_fid"`
 }

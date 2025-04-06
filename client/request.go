@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package client
 
 // Request represents a flood data query request, containing various parameters for searching flood data.
 type Request struct {
@@ -67,4 +67,13 @@ type BatchDataRequest struct {
 
 	// Requests is a list of batch request items to be processed together.
 	Requests []BatchRequest `json:"requests"`
+}
+
+// FloodDataBatch represents a batch response from the FEMA Flood Data API, used for processing multiple requests at once.
+type FloodDataBatch struct {
+	// BatchID is the unique identifier for the batch request.
+	BatchID string `json:"batch_id"`
+
+	// Result is a presigned URL for an S3 object containing the batch result data.
+	Result string `json:"result"`
 }

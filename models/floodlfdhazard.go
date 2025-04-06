@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // FloodFieldHazard represents the details of a flood hazard area.
 // It contains information about specific flood zones and their characteristics.

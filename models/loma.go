@@ -1,4 +1,4 @@
-package go_nationalflooddata
+package models
 
 // Loma represents a Letter of Map Amendment (LOMA) record.
 // It contains information about amendments to flood maps for specific properties.
